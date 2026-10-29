@@ -174,6 +174,32 @@ install(
 )
 
 # --------------------------------------------------------------------------- #
+# Debian package, built with `cpack -G DEB` from the build directory.
+# One package per Gazebo release, only one can be installed at a time.
+
+if(DEFINED ENV{GZ_VERSION})
+  set(GZ_DISTRO $ENV{GZ_VERSION})
+else()
+  set(GZ_DISTRO harmonic)
+endif()
+
+set(CPACK_PACKAGE_NAME "ardupilot-gazebo-${GZ_DISTRO}")
+set(CPACK_PACKAGE_VERSION "0.0.0")
+set(CPACK_PACKAGE_CONTACT "Rhys Mainwaring <rhys.mainwaring@me.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
+  "ArduPilot SITL plugins and models for Gazebo ${GZ_DISTRO}")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE
+  "https://github.com/ArduPilot/ardupilot_gazebo")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+# GStreamer elements used by GstCameraPlugin
+set(CPACK_DEBIAN_PACKAGE_DEPENDS
+  "gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly")
+set(CPACK_DEBIAN_PACKAGE_PROVIDES "ardupilot-gazebo")
+set(CPACK_DEBIAN_PACKAGE_CONFLICTS "ardupilot-gazebo")
+include(CPack)
+
+# --------------------------------------------------------------------------- #
 # Register as an ament package if ament_cmake is available.
 if(${ament_cmake_FOUND})
   ament_environment_hooks(
