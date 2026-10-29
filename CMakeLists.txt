@@ -176,6 +176,7 @@ install(
 # --------------------------------------------------------------------------- #
 # Debian package, built with `cpack -G DEB` from the build directory.
 # One package per Gazebo release, only one can be installed at a time.
+# Everything is installed under /opt/ardupilot_gazebo.
 
 if(DEFINED ENV{GZ_VERSION})
   set(GZ_DISTRO $ENV{GZ_VERSION})
@@ -185,6 +186,7 @@ endif()
 
 set(CPACK_PACKAGE_NAME "ardupilot-gazebo-${GZ_DISTRO}")
 set(CPACK_PACKAGE_VERSION "0.0.0")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/${PROJECT_NAME}")
 set(CPACK_PACKAGE_CONTACT "Rhys Mainwaring <rhys.mainwaring@me.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
   "ArduPilot SITL plugins and models for Gazebo ${GZ_DISTRO}")

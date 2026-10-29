@@ -114,24 +114,25 @@ make -j4
 
 ### Debian package
 
-Debian packages for Harmonic and Jetty on Ubuntu 24.04 can be built from the
-`ubuntu-build` workflow: run it manually from the Actions tab with
-"Build the Debian packages" checked, and download the
-`ardupilot-gazebo-<release>-deb` artifact. Install it with:
+Debian packages for Harmonic and Jetty on Ubuntu 24.04 are built from `main`
+and published in the
+[nightly release](https://github.com/ArduPilot/ardupilot_gazebo/releases/tag/nightly).
+They can also be built from the `ubuntu-build` workflow: run it manually from
+the Actions tab with "Build the Debian packages" checked, and download the
+`ardupilot-gazebo-<release>-deb` artifact. Install the package matching your
+Gazebo release with:
 
 ```bash
 sudo apt install ./ardupilot-gazebo-harmonic_*.deb
 ```
 
-To build it locally, run `cpack -G DEB` in a build directory configured with
-`-DCMAKE_INSTALL_PREFIX=/usr`.
+To build it locally, run `cpack -G DEB` in a build directory.
 
-The package installs to `/usr/lib/ardupilot_gazebo` and
-`/usr/share/ardupilot_gazebo`:
+The package installs everything under `/opt/ardupilot_gazebo`:
 
 ```bash
-export GZ_SIM_SYSTEM_PLUGIN_PATH=/usr/lib/ardupilot_gazebo:$GZ_SIM_SYSTEM_PLUGIN_PATH
-export GZ_SIM_RESOURCE_PATH=/usr/share/ardupilot_gazebo/models:/usr/share/ardupilot_gazebo/worlds:$GZ_SIM_RESOURCE_PATH
+export GZ_SIM_SYSTEM_PLUGIN_PATH=/opt/ardupilot_gazebo/lib/ardupilot_gazebo:$GZ_SIM_SYSTEM_PLUGIN_PATH
+export GZ_SIM_RESOURCE_PATH=/opt/ardupilot_gazebo/share/ardupilot_gazebo/models:/opt/ardupilot_gazebo/share/ardupilot_gazebo/worlds:$GZ_SIM_RESOURCE_PATH
 ```
 
 ## Configure

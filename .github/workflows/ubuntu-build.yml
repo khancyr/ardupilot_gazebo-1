@@ -16,6 +16,9 @@ concurrency:
   group: ci-${{github.workflow}}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -26,6 +29,8 @@ jobs:
         gz: [harmonic, jetty]
     env:
       GZ_VERSION: ${{ matrix.gz }}
+      # Debian packages on manual request and on every push to main
+      BUILD_DEB: ${{ inputs.deb || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -81,24 +86,48 @@ jobs:
         shell: bash
         run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           make -j4
 
       - name: Check SDF files
         run: |
           scripts/check_sdf.sh
 
+      # the commit date keeps the version increasing along main
       - name: Build Debian package
-        if: inputs.deb
+        if: env.BUILD_DEB == 'true'
         working-directory: build
         run: |
-          cpack -G DEB -R "0.0.0+git$(date -u +%Y%m%d).$(git rev-parse --short HEAD)"
+          cpack -G DEB -R "0.0.0+git$(TZ=UTC git log -1 --format=%cd --date=format-local:%Y%m%d%H%M%S).$(git rev-parse --short HEAD)"
           sudo apt-get install -y ./*.deb
 
       - name: Upload Debian package
-        if: inputs.deb
+        if: env.BUILD_DEB == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ardupilot-gazebo-${{ matrix.gz }}-deb
           path: build/*.deb
           if-no-files-found: error
+
+  # Replace the nightly prerelease with the packages built from main
+  nightly:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'ArduPilot/ardupilot_gazebo'
+    needs: build
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Download Debian packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ardupilot-gazebo-*-deb
+          merge-multiple: true
+      - name: Publish the nightly release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete nightly --yes --cleanup-tag || true
+          gh release create nightly ./*.deb --prerelease --target "${GITHUB_SHA}" \
+            --title "Nightly" \
+            --notes "Debian packages built from ${GITHUB_SHA} on main, for Ubuntu 24.04."
